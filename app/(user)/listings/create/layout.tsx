@@ -6,7 +6,7 @@ import { redirect } from "next/navigation"
 import { Fragment } from "react"
 
 export const metadata: Metadata = {
-    title: "Dormie - Create Listing",
+    title: "MyCvSUDorm - Create Listing",
     authors: {
         name: "Waffen Sultan",
         url: "https://github.com/waffenffs"

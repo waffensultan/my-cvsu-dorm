@@ -46,7 +46,7 @@ export default function Navigation({ user }: { user: User | null }) {
                     className="text-2xl md:text-4xl font-bold tracking-wide flex flex-row items-center gap-1"
                 >
                     <HouseIcon  size={30} />
-                    <span>Dormie</span>
+                    <span>MyCvSUDorm</span>
                 </Link>
             </section>
 

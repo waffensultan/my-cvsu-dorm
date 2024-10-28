@@ -5,7 +5,7 @@ import ThemeProvider from "./components/providers/theme-provider";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Dormie",
+  title: "MyCvSUDorm",
   authors: {
     name: "Waffen Sultan",
     url: "https://github.com/waffenffs"

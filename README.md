@@ -1,4 +1,4 @@
-# Welcome to [Dormie](https://github.com/Waffenffs/Dormie/)!
+# Welcome to [MyCVSUDorm!](https://github.com/waffensultan/my-cvsu-dorm/)!
 
 ## Tech Stack
 

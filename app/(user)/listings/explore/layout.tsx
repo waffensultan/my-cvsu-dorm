@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import React, { Fragment } from "react";
 
 export const metadata: Metadata = {
-    title: "Dormie - Listings",
+    title: "MyCvSUDorm - Listings",
     authors: {
         name: "Waffen Sultan",
         url: "https://github.com/waffenffs"
