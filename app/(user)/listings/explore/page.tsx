@@ -1,321 +1,81 @@
-'use client';
+import { headers } from "next/headers";
 
-import type { User } from "@supabase/supabase-js"
-import type { Tables } from "@/supabase/supabase/database.types";
-import type {
-    USER_ROLE,
-    DORM_TYPE,
-    AMENITY,
-    GENDER_PREFERENCE,
-    FILTERS
-} from "@/app/lib/constants";
-
-import { genderPreferenceIcon } from "@/app/lib/shared";
-
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-import {
-    USER_ROLES, 
-    DORM_TYPES,
-    AMENITIES,
-    GENDER_PREFERENCES
-} from "@/app/lib/constants";
-import { wait } from "@/app/lib/utils";
-
-import { submit_role } from "../actions";
 import { buildFiltersApiRequestURL } from "@/lib/apiHelpers";
 
-import {
-    UsersRound as UsersRoundIcon,
-    Building2 as Building2Icon, 
-    UserRound as UserRoundIcon,
-    BookOpen as BookOpenIcon, 
-    Filter as FilterIcon,
-    Search as SearchIcon,
-    Check as CheckIcon,
-} from "lucide-react"
+import { createClient } from "@/supabase/server"
 
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-    Drawer,
-    DrawerClose,
-    DrawerTrigger,
-    DrawerContent,
-    DrawerTitle,
-    DrawerDescription,
-    DrawerHeader,
-    DrawerFooter,
-} from "@/components/ui/drawer"
+import { Fragment } from "react";
+import ListingsPage from "@/app/components/pages/listings-page";
 
-// type ListingsPageProps = {
-//     user: User | null;
-//     role_initialized: Tables<'users'>['role_initialized'];
-//     listings: Tables<'listings'>[];
-// }
+// // STEP 1:
+// // 1. Middleware attaches URL params from the user to headers
 
-export default function ListingsPage({ user, role_initialized }: {
-    user: User | null;
-    role_initialized: Tables<'users'>['role_initialized'];
-    // listings?: Tables<'listings'>[];
-}) {
-    // dialog states 
-    const [showRoleDialog, setShowRoleDialog] = useState<boolean | undefined>();
-    const [submittedRole, setSubmittedRole] = useState<boolean | undefined>(undefined);
-    const [selectedRole, setSelectedRole] = useState<USER_ROLE | undefined>(undefined);
+// // STEP 2:
+// // 2. layout.tsx checks for any URL params in the headers sent by the middleware
+// // 2.1.
+// // (if any url params were found AKA user applied filters)
+// // ----> layout.tsx makes a call to api/explore and receives filtered data
+// // (if there are no url params that were found (user did not apply any filter)
+// // ----> layout.tsx makes a call to api/explore and receives regular/unfiltered data
 
-    // query/filter states 
-    const [search, setSearch] = useState("");
-    const [selectedRoleDormType, setSelectedDormType] = useState<DORM_TYPE | undefined>(undefined);
-    const [selectedGenderPreference, setSelectedGenderPreference] = useState<GENDER_PREFERENCE | undefined>(undefined);
-    const [selectedAmenities, setSelectedAmenities] = useState<AMENITY[]>([]);
-    const [selectedRooms, setSelectedRooms] = useState(1);
-    const [priceRange, setPriceRange] = useState([1000, 3500]);
+// // STEP 3:
+// // 3. layout.tsx sends the received data from api/explore down to the client 
 
-    useEffect(() => {
-        if (!showRoleDialog) {
-            wait(1000).then(() => setShowRoleDialog(true));
+// // STEP 4:
+// // 4. if the user applies filters:
+// // ----> we refresh/revalidate the path, forcing a re-fetch and we go back to STEP 1
+
+export default async function Page() {
+    const headersList = headers();
+    const filters = headersList.get('filters')
+    const parsedFilters = JSON.parse(filters ?? '');
+
+    const filtersAreNotNull = Object.values(parsedFilters).some(value => 
+        value !== null && 
+        value !== undefined && 
+        value !== ''
+    );
+
+    let listingsData;
+
+    try {
+        let response;
+
+        if (filtersAreNotNull) {
+            const callableApiURL = buildFiltersApiRequestURL(
+                'http://localhost:3000/api/explore?', 
+                parsedFilters
+            );
+
+            response = await fetch(callableApiURL);
+        } else {
+            response = await fetch(new URL('http://localhost:3000/api/explore').toString());
         }
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-
-    const router = useRouter();
-
-    const handleApplyFilter = () => {
-        const filters: FILTERS = {
-            dorm_type: selectedRoleDormType?.trim().toLowerCase(),
-            gender_pref: selectedGenderPreference?.trim().toLowerCase(),
-            amenities: selectedAmenities?.map((amenity) => amenity.toLowerCase()).join(','),
-            pricing: priceRange.map((price) => price.toString()).join(','),
-            rooms: selectedRooms?.toString()
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
         }
 
-        const callableApiURL = buildFiltersApiRequestURL(
-            'http://localhost:3000/listings/explore?',
-            filters
-        )
-
-        router.push(callableApiURL.toString());
-        router.refresh();
+        listingsData = await response.json();
+    } catch (error) {
+        console.error(error);
     }
 
-    const handleRoleSubmit = async () => {
-        if (selectedRole === undefined) {
-            return toast.error('Please choose a role!')
-        }
-        if (user === null) {
-            return toast.error('User does not exist!')
-        }
-
-        try {
-            await submit_role(selectedRole, user.id);
-            setSubmittedRole(true);
-        } catch (error) {
-            if (error instanceof Error) {
-                toast.error(error.message);
-            }
-        }
-    }
+    const supabase = createClient();
+    const { data } = await supabase.auth.getUser();
+    const { data: userRoleData } = await supabase
+        .from('users')
+        .select('role_initialized')
+        .eq('id', data.user?.id)
+        .single()
 
     return (
-        <main className="bg-muted overflow-auto w-full h-screen">
-            <div className="md:hidden w-full flex justify-center items-center py-5">
-                <div className="bg-background rounded-[var(--radius)] p-4 w-4/5 flex flex-row items-center shadow">
-                    <Input
-                        searchIcon={SearchIcon}
-                        className="w-11/12"
-                        placeholder="Enter dorm name here..."
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                    />
-                    <Drawer>
-                        <DrawerTrigger className="flex-grow flex justify-center items-center">
-                            <FilterIcon />
-                        </DrawerTrigger>
-                        <DrawerContent>
-                            <ScrollArea className="overflow-auto px-5 h-[55rem] md:hidden">
-                                <DrawerHeader>
-                                    <DrawerTitle>Filter Dorms</DrawerTitle>
-                                    <DrawerDescription>You can filter and search for your dream dorms here.</DrawerDescription>
-                                </DrawerHeader>
-                                <div className="flex flex-col gap-3 pt-5">
-                                    <DrawerTitle>Dorm Type</DrawerTitle>
-                                    <div className="w-full flex justify-between items-center gap-4">
-                                        {DORM_TYPES.map((type) => (
-                                            <div
-                                                key={type}
-                                                className={`
-                                                    w-1/2 h-24 transition duration-150 cursor-pointer flex flex-col gap-2 justify-center items-center rounded-[var(--radius)]
-                                                    ${selectedRoleDormType === type ? 'bg-primary text-white shadow-xl' : 'border border-border'}
-                                                `}
-                                                onClick={() => setSelectedDormType(type)}
-                                            >
-                                                {type === "Shared" ? <UsersRoundIcon /> : <UserRoundIcon />}
-                                                <h1>{type}</h1>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-3 pt-5">
-                                    <DrawerTitle>Tenant Gender Preference</DrawerTitle>
-                                    <div className="w-full flex justify-evenly items-center gap-5">
-                                        {GENDER_PREFERENCES.map((pref) => (
-                                            <div 
-                                                key={pref} 
-                                                className={`
-                                                    flex flex-row justify-center items-center gap-1 flex-grow py-1 transition duration-150 rounded-[var(--radius)]
-                                                    ${selectedGenderPreference === pref ? 'bg-primary text-white shadow-xl' : 'border border-border'}
-                                                `}
-                                                onClick={() => setSelectedGenderPreference(pref)}
-                                            >
-                                                {genderPreferenceIcon[pref]}
-                                                <span>{pref}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-3 pt-7">
-                                    <DrawerTitle>Amenities</DrawerTitle>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {AMENITIES.map((amenity) => (
-                                            <div 
-                                                key={amenity} 
-                                                className="flex flex-row items-center gap-2"
-                                            >
-                                                <Checkbox 
-                                                    id={amenity}
-                                                    checked={selectedAmenities.includes(amenity)}
-                                                    onCheckedChange={(checked) => {
-                                                        return checked
-                                                        ?
-                                                        setSelectedAmenities(prevState => [...prevState, amenity])
-                                                        :
-                                                        setSelectedAmenities(prevState => {
-                                                            const updatedAmenities = prevState.filter((thisAmenity) => thisAmenity !== amenity);
-
-                                                            return updatedAmenities;
-                                                        })
-                                                    }}
-                                                />
-                                                <label htmlFor={amenity}>{amenity}</label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-5 pt-10">
-                                    <DrawerTitle>Price Range</DrawerTitle>
-                                    <Slider 
-                                        defaultValue={priceRange} 
-                                        onValueChange={(value) => setPriceRange([...value])}
-                                        max={9999}
-                                        min={0}
-                                        step={250}
-                                    />
-                                    <section className="w-full flex flex-row justify-center items-center gap-10">
-                                        <div className="flex flex-col gap-1 text-center">
-                                            <Input 
-                                                value={priceRange[0]} 
-                                                disabled
-                                                className="w-32"
-                                            />
-                                            <label className="text-muted-foreground font-semibold">Min</label>
-                                        </div>
-                                        <div className="flex flex-col gap-1 text-center">
-                                            <Input 
-                                                value={priceRange[1]}
-                                                disabled
-                                                className="w-32"
-                                            />
-                                            <label className="text-muted-foreground font-semibold">Max</label>
-                                        </div>
-                                    </section>
-                                </div>
-                                <div className="flex flex-col gap-5 pt-10">
-                                    <DrawerTitle>Rooms</DrawerTitle>
-                                    <div className="w-full flex flex-row justify-around items-center gap-3">
-                                        {[1, 2, 3, 4, 5].map((number) => (
-                                            <div 
-                                                key={number}
-                                                className={`
-                                                    w-1/2 h-14 transition duration-150 cursor-pointer flex flex-col gap-2 justify-center items-center rounded-[var(--radius)] border font-semibold 
-                                                    ${selectedRooms === number ? 'bg-primary text-white shadow-xl' : 'border-border'}
-                                                `}
-                                                onClick={() => setSelectedRooms(number)}
-                                            >{number}</div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <DrawerFooter className="pt-14 flex flex-col gap-3">
-                                    <Button onClick={(event) => {
-                                        event.preventDefault();
-                                        handleApplyFilter();
-                                    }}>Apply Filters</Button>
-                                    <DrawerClose asChild>
-                                        <Button variant={"outline"}>Close</Button>
-                                    </DrawerClose>
-                                </DrawerFooter>
-                            </ScrollArea>
-                        </DrawerContent>
-                    </Drawer>
-                </div>
-            </div>
-            <Dialog 
-                open={!role_initialized && user !== null && !submittedRole && showRoleDialog}
-                onOpenChange={(showRoleDialog) => {
-                    if (!showRoleDialog) {
-                        setShowRoleDialog(false);
-                    }
-                }}
-            >
-                <DialogContent 
-                    onInteractOutside={(e) => e.preventDefault()}
-                    className="[&>button]:hidden w-5/6 rounded-[var(--radius)] flex flex-col gap-10"
-                >
-                    <DialogHeader>
-                        <DialogTitle>Welcome to Dormie!</DialogTitle>
-                        <DialogDescription>What&apos;s your role as a user?</DialogDescription>
-                    </DialogHeader>
-                    <section className="flex flex-row items-center gap-2">
-                        {USER_ROLES.map((role) => (
-                            <div
-                                key={role}
-                                className={`
-                                    w-1/2 h-32 transition duration-150 cursor-pointer flex flex-col gap-2 justify-center items-center rounded-[var(--radius)] border 
-                                    ${selectedRole === role ? 'bg-primary text-white shadow-xl' : 'border-border'}
-                                `}
-                                onClick={() => setSelectedRole(role)}
-                            >
-                                {role === "Owner" ? <Building2Icon /> : <BookOpenIcon />}
-                                <h1>{role}</h1>
-                            </div>
-                        ))}
-                    </section>
-                    <DialogFooter className="flex flex-row items-center">
-                        <DialogDescription>Please choose one.</DialogDescription>
-                        <Button 
-                            className="flex flex-row items-center gap-1" 
-                            onClick={() => handleRoleSubmit()}
-                        >
-                            <CheckIcon />
-                            Complete
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </main>
+        <Fragment>
+            <ListingsPage
+                user={data?.user} 
+                listings={listingsData?.data}
+                role_initialized={userRoleData?.role_initialized} 
+            />
+        </Fragment>
     )
 }
