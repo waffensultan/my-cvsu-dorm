@@ -1,7 +1,7 @@
 'use client';
 
 import type { User } from "@supabase/supabase-js"
-import { Tables } from "@/supabase/supabase/database.types";
+import type { Tables } from "@/supabase/supabase/database.types";
 import type {
     USER_ROLE,
     DORM_TYPE,
@@ -85,6 +85,8 @@ export default function ListingsPage(props: ListingsPageProps) {
         if (!showRoleDialog) {
             wait(1000).then(() => setShowRoleDialog(true));
         }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const router = useRouter();
@@ -267,7 +269,6 @@ export default function ListingsPage(props: ListingsPageProps) {
                     </Drawer>
                 </div>
             </div>
-            <h1 className="text-2xl">TESTING</h1>
             <Dialog 
                 open={!props.role_initialized && props.user !== null && !submittedRole && showRoleDialog}
                 onOpenChange={(showRoleDialog) => {
@@ -282,7 +283,7 @@ export default function ListingsPage(props: ListingsPageProps) {
                 >
                     <DialogHeader>
                         <DialogTitle>Welcome to Dormie!</DialogTitle>
-                        <DialogDescription>What's your role as a user?</DialogDescription>
+                        <DialogDescription>What&apos;s your role as a user?</DialogDescription>
                     </DialogHeader>
                     <section className="flex flex-row items-center gap-2">
                         {USER_ROLES.map((role) => (

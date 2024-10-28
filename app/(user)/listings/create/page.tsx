@@ -428,7 +428,10 @@ export default function CreateListings() {
                                 <div className="flex flex-col md:flex-row md:flex-wrap gap-2">
                                     {Array.isArray(field.value) && (
                                         field.value?.map((amenity) => (
-                                            <div className="hover:cursor-default self-start flex flex-row gap-2 items-center rounded-[var(--radius)] border border-border py-1 px-3 text-sm font-semibold tracking-wide hover:bg-muted transition duration-300">
+                                            <div 
+                                                key={amenity}
+                                                className="hover:cursor-default self-start flex flex-row gap-2 items-center rounded-[var(--radius)] border border-border py-1 px-3 text-sm font-semibold tracking-wide hover:bg-muted transition duration-300"
+                                            >
                                                 <span>Includes {amenity}</span>
                                                 <XIcon 
                                                     className="hover:cursor-pointer hover:text-red-500"
@@ -486,7 +489,7 @@ export default function CreateListings() {
                                         </div>
                                     ) : (
                                         field.value?.map((convenience, index) => (
-                                            <Fragment>
+                                            <Fragment key={convenience.title}>
                                                 <div className="w-full flex flex-row items-center gap-3 text-sm">
                                                     <span className="font-semibold">{index + 1}.</span>
                                                     <p>{convenience.title}</p>
