@@ -83,6 +83,8 @@ async function ListingsWrapper() {
         console.error(error);
     }
 
+    console.log(listingsData);
+
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     const { data: userRoleData } = await supabase
