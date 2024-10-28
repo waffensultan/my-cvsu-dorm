@@ -1,7 +1,5 @@
 'use client';
 
-// test
-
 import type { User } from "@supabase/supabase-js"
 import type { Tables } from "@/supabase/supabase/database.types";
 import type {
@@ -63,13 +61,17 @@ import {
     DrawerFooter,
 } from "@/components/ui/drawer"
 
-type ListingsPageProps = {
+// type ListingsPageProps = {
+//     user: User | null;
+//     role_initialized: Tables<'users'>['role_initialized'];
+//     listings: Tables<'listings'>[];
+// }
+
+export default function ListingsPage({ user, role_initialized, listings }: {
     user: User | null;
     role_initialized: Tables<'users'>['role_initialized'];
     listings: Tables<'listings'>[];
-}
-
-export default function ListingsPage(props: ListingsPageProps) {
+}) {
     // dialog states 
     const [showRoleDialog, setShowRoleDialog] = useState<boolean | undefined>();
     const [submittedRole, setSubmittedRole] = useState<boolean | undefined>(undefined);
@@ -115,12 +117,12 @@ export default function ListingsPage(props: ListingsPageProps) {
         if (selectedRole === undefined) {
             return toast.error('Please choose a role!')
         }
-        if (props.user === null) {
+        if (user === null) {
             return toast.error('User does not exist!')
         }
 
         try {
-            await submit_role(selectedRole, props.user.id);
+            await submit_role(selectedRole, user.id);
             setSubmittedRole(true);
         } catch (error) {
             if (error instanceof Error) {
@@ -272,7 +274,7 @@ export default function ListingsPage(props: ListingsPageProps) {
                 </div>
             </div>
             <Dialog 
-                open={!props.role_initialized && props.user !== null && !submittedRole && showRoleDialog}
+                open={!role_initialized && user !== null && !submittedRole && showRoleDialog}
                 onOpenChange={(showRoleDialog) => {
                     if (!showRoleDialog) {
                         setShowRoleDialog(false);
