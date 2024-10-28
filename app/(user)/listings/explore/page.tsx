@@ -7,23 +7,25 @@ import { createClient } from "@/supabase/server"
 import { Fragment } from "react";
 import ListingsPage from "@/app/components/pages/listings-page";
 
-// // STEP 1:
-// // 1. Middleware attaches URL params from the user to headers
+/* 
+    * STEP 1:
+    1. Middleware attaches URL params from the user to headers
 
-// // STEP 2:
-// // 2. layout.tsx checks for any URL params in the headers sent by the middleware
-// // 2.1.
-// // (if any url params were found AKA user applied filters)
-// // ----> layout.tsx makes a call to api/explore and receives filtered data
-// // (if there are no url params that were found (user did not apply any filter)
-// // ----> layout.tsx makes a call to api/explore and receives regular/unfiltered data
+    * STEP 2:
+    2. layout.tsx checks for any URL params in the headers sent by the middleware
+    2.1.
+    (if any url params were found AKA user applied filters)
+    ----> layout.tsx makes a call to api/explore and receives filtered data
+    (if there are no url params that were found (user did not apply any filter)
+    ----> layout.tsx makes a call to api/explore and receives regular/unfiltered data
 
-// // STEP 3:
-// // 3. layout.tsx sends the received data from api/explore down to the client 
+    * STEP 3:
+    3. layout.tsx sends the received data from api/explore down to the client 
 
-// // STEP 4:
-// // 4. if the user applies filters:
-// // ----> we refresh/revalidate the path, forcing a re-fetch and we go back to STEP 1
+    * STEP 4:
+    4. if the user applies filters:
+    ----> we refresh/revalidate the path, forcing a re-fetch and we go back to STEP 1   
+*/
 
 export default async function Page() {
     const headersList = headers();
