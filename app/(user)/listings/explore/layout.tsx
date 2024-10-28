@@ -95,7 +95,7 @@ async function ListingsWrapper() {
         <Fragment>
             <ListingsPage
                 user={data?.user} 
-                listings={listingsData?.data}
+                // listings={listingsData?.data}
                 role_initialized={userRoleData?.role_initialized} 
             />
         </Fragment>

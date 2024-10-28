@@ -67,10 +67,10 @@ import {
 //     listings: Tables<'listings'>[];
 // }
 
-export default function ListingsPage({ user, role_initialized, listings }: {
+export default function ListingsPage({ user, role_initialized }: {
     user: User | null;
     role_initialized: Tables<'users'>['role_initialized'];
-    listings: Tables<'listings'>[];
+    // listings?: Tables<'listings'>[];
 }) {
     // dialog states 
     const [showRoleDialog, setShowRoleDialog] = useState<boolean | undefined>();
