@@ -47,7 +47,7 @@ export default async function ListingsLayout() {
     )
 }
 
-export async function ListingsWrapper() {
+async function ListingsWrapper() {
     const headersList = headers();
     const filters = headersList.get('filters')
     const parsedFilters = JSON.parse(filters ?? '');
